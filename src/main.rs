@@ -1,8 +1,7 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufRead, BufReader};
 use std::str::FromStr;
 use clap::Parser;
-use pavao::{SmbClient, SmbCredentials, SmbOpenOptions, SmbOptions};
 
 mod models;
 use crate::models::{Punch, PunchesRequest};
@@ -12,50 +11,15 @@ struct Args {
     /// device API token
     #[arg(short, long)]
     token: String,
-    /// address:port
     #[arg(short, long)]
-    address: String,
-    #[arg(short, long)]
-    file_path: String,
-    #[arg(short, long)]
-    username: String,
-    #[arg(short, long)]
-    password: Option<String>,
-    #[arg(short, long)]
-    workgroup: Option<String>,
-    #[arg(short, long)]
-    share: Option<String>,
-    /// supply path to local file instead of reading from SMB share
-    #[arg(short, long, default_value = "false")]
-    debug_local: bool,
+    file_path: String
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let client = SmbClient::new(
-        SmbCredentials::default()
-            .server(format!("smb://{}", args.address))
-            .share(args.share.unwrap_or_default())
-            .username(args.username)
-            .password(args.password.unwrap_or_default())
-            .workgroup(args.workgroup.unwrap_or_default()),
-        SmbOptions::default()
-            .one_share_per_server(true),
-    )
-        .unwrap();
-
-    let file: Box<dyn Read> = if args.debug_local {
-        Box::new(
-            File::open(args.file_path.clone())
-            .map_err(|e| format!("Failed to open file: {}, {}", args.file_path, e.to_string()))?
-        )
-    } else {
-        Box::new(
-            client.open_with(args.file_path.clone(), SmbOpenOptions::default().read(true))
-            .map_err(|e| format!("Failed to open file: {}, {}", args.file_path, e.to_string()))?
-        )
-    };
+    let file = File::open(args.file_path.clone())
+        .map_err(|e| format!("Failed to open file: {}, {}", args.file_path, e.to_string()))?;
 
     let client = reqwest::blocking::Client::new();
     let mut punches_to_send = Vec::new();
