@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .send() {
 Ok(r) => r,
 Err(e) => { 
-eprintln!("Request failed: {}, e.to_string()); 
+eprintln!("Request failed: {}", e.to_string()); 
 std::thread::sleep(std::time::Duration::from_millis(5000));
 continue;
  }
