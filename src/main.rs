@@ -48,9 +48,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 records: punches_to_send.clone()
             };
 
-            let res = client.post("https://api.oresults.eu/punches")
+            let res = match client.post("https://api.oresults.eu/punches")
                 .json(&payload)
-                .send()?;
+                .send() {
+Ok(r) => r,
+Err(e) => { 
+eprintln!("Request failed: {}, e.to_string()); 
+std::thread::sleep(std::time::Duration::from_millis(5000));
+continue;
+ }
+
+};
 
             if res.status().is_success() {
                 println!("Punches sent ({}): [{}]",
